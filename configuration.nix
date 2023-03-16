@@ -1,15 +1,15 @@
 { config, lib, pkgs, ... }:
 
 {
+  environment.gnome.excludePackages = with pkgs; [ pkgs.gnome-tour ];
   documentation.dev.enable = true;
   i18n.defaultLocale = "pl_PL.UTF-8";
   imports = [ <nixpkgs/nixos/modules/installer/scan/not-detected.nix> ];
-  location.provider = "geoclue2";
   powerManagement.cpuFreqGovernor = "performance";
   security.sudo.wheelNeedsPassword = false;
   swapDevices = [ { device = "/dev/sda2"; } ];
   time.timeZone = "Europe/Warsaw";
-  
+
   boot = {
 	  cleanTmpDir = true;
 	  kernelModules = [ "kvm-amd" ];
@@ -73,15 +73,14 @@
   };
 
   nixpkgs = {
-	  config.allowUnfree = true;
+    config.allowUnfree = true;
 	  hostPlatform = lib.mkDefault "x86_64-linux";
   };
   
   programs = {
 	  adb.enable = true;
-	  nm-applet.enable = true;
 	  steam.enable = true;
-	  
+
 	  bash = {
 	    interactiveShellInit = "unset HISTFILE";
 	    loginShellInit = "unset HISTFILE";
@@ -99,25 +98,24 @@
     emacs = {
       enable = true;
       defaultEditor = true;
+      package = with pkgs; (emacsWithPackages (with emacsPackagesNg; [
+      	nix-mode
+      ]));
     };
 
-	  redshift = {
-	    enable = true;
-	    temperature.night = 2700;
-	  };
-
+    gnome = {
+      core-utilities.enable = false;
+      gnome-browser-connector.enable = false;
+    };
+    
 	  xserver = {
+      desktopManager.gnome.enable = true;
+      displayManager.gdm.enable = true;
 	    enable = true;
 	    excludePackages = with pkgs; [ xterm ];
 	    layout = "pl";
 	    libinput.enable = true;
 	    videoDrivers = [ "ati" ];
-
-	    windowManager.exwm = {
-		    enable = true;
-		    enableDefaultConfig = false;
-		    extraPackages = epkgs: [ epkgs.nix-mode ];
-	    };
 	  };
   };
 
@@ -130,13 +128,6 @@
 	  };
   };
 
-  systemd.user.services.pasystray = {
-	  description = "PulseAudio volume control applet";
-	  wantedBy = [ "graphical-session.target" ];
-	  partOf = [ "graphical-session.target" ];
-	  serviceConfig.ExecStart = "${pkgs.pasystray}/bin/pasystray";
-  };
-  
   users = {
 	  mutableUsers = false;
 
@@ -151,8 +142,9 @@
 		    bleachbit
 		    curl
 		    file
-		    firefox-bin
-		    pasystray
+        firefox-bin
+        netsurf.browser
+        pcmanfm
 		    steam
 		    steam-run
 		    tdesktop
@@ -160,7 +152,13 @@
 		    transmission-gtk
 		    unrar
 		    unzip
+        vlc
 		    zip
+
+        gnomeExtensions.alphabetical-app-grid
+        gnomeExtensions.hide-activities-button
+        gnomeExtensions.openweather
+        gnomeExtensions.vitals
 	    ];
 	  };
   };
