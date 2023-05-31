@@ -1,31 +1,43 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, modulesPath, ... }:
 
 {
-  environment.gnome.excludePackages = with pkgs; [ pkgs.gnome-tour ];
   documentation.dev.enable = true;
   i18n.defaultLocale = "pl_PL.UTF-8";
-  imports = [ <nixpkgs/nixos/modules/installer/scan/not-detected.nix> ];
-  powerManagement.cpuFreqGovernor = "performance";
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
   security.sudo.wheelNeedsPassword = false;
   swapDevices = [ { device = "/dev/sda2"; } ];
   time.timeZone = "Europe/Warsaw";
 
+  environment.gnome.excludePackages = with pkgs.gnome; [
+	baobab cheese epiphany geary gedit gnome-calculator gnome-calendar
+	gnome-characters gnome-clocks gnome-contacts gnome-shell-extensions
+	gnome-font-viewer gnome-logs gnome-music gnome-screenshot gnome-software
+	gnome-weather totem simple-scan yelp
+  ] ++ [ 
+	pkgs.gnome-connections pkgs.gnome-text-editor pkgs.gnome-tour
+	pkgs.gnome-photos
+  ];
+
   boot = {
 	  cleanTmpDir = true;
 	  kernelModules = [ "kvm-amd" ];
-	  kernelParams = [ "mitigations=off" ];
 
 	  initrd = {
-	    availableKernelModules = [ "ahci" "ohci_pci" "ehci_pci" "usb_storage" "sd_mod" "sr_mod" "rtsx_pci_sdmmc" ];
-	    luks.devices."crypted".device = "/dev/sda3";
+	    availableKernelModules = [];
+	    luks.devices."crypted".device = "";
 	  };
 
-	  loader.grub = {
-	    device = "/dev/sda";
-	    enable = true;
-	    memtest86.enable = true;
-	    version = 2;
-	  };
+
+	loader = {
+	    efi.canTouchEfiVariables = true;
+	    
+	    systemd-boot = {
+		configurationLimit = 5;
+		consoleMode = "auto";
+		enable = true;
+		memtest86.enable = true;
+	    };
+	};
   };
 
   console = {
@@ -41,12 +53,22 @@
 
 	  "/boot" = {
 	    device = "/dev/sda1";
-	    fsType = "ext4";
+	    fsType = "vfat";
 	  };
   };
 
+    fonts = {
+	enableDefaultFonts = true;
+	enableGhostscriptFonts = true;
+    };
+
   hardware = {
 	  cpu.amd.updateMicrocode = true;
+
+	bluetooth = {
+	    enable = true;
+	    package = pkgs.bluezFull;
+	};
 
 	  opengl = {
 	    driSupport = true;
@@ -68,8 +90,8 @@
   };
 
   nix = {
-	  buildCores = 2;
-	  maxJobs = lib.mkDefault 3;
+	  buildCores = 4;
+	  maxJobs = lib.mkDefault 5;
   };
 
   nixpkgs = {
@@ -79,11 +101,18 @@
   
   programs = {
 	  adb.enable = true;
+	  file-roller.enable = false;
+	seahorse.enable = false;
 	  steam.enable = true;
 
 	  bash = {
 	    interactiveShellInit = "unset HISTFILE";
 	    loginShellInit = "unset HISTFILE";
+	    
+	    undistractMe = {
+		enable = true;
+		playSound = true;
+	    };
 	  };
 
 	  git = {
@@ -93,6 +122,7 @@
   };
   
   services = {
+  	gnome.gnome-browser-connector.enable = true;
 	  printing.enable = true;
 
     emacs = {
@@ -102,20 +132,15 @@
       	nix-mode
       ]));
     };
-
-    gnome = {
-      core-utilities.enable = false;
-      gnome-browser-connector.enable = false;
-    };
     
 	  xserver = {
-      desktopManager.gnome.enable = true;
-      displayManager.gdm.enable = true;
-	    enable = true;
-	    excludePackages = with pkgs; [ xterm ];
-	    layout = "pl";
-	    libinput.enable = true;
-	    videoDrivers = [ "ati" ];
+      		desktopManager.gnome.enable = true;
+      		displayManager.gdm.enable = true;
+	    	enable = true;
+	    	excludePackages = with pkgs; [ xterm ];
+	    	layout = "pl";
+	    	libinput.enable = true;
+	    	videoDrivers = [ "amdgpu" ];
 	  };
   };
 
@@ -139,21 +164,29 @@
 	    uid = 1337;
 
 	    packages = with pkgs; [
-		    bleachbit
-		    curl
-		    file
-        firefox-bin
-        netsurf.browser
-        pcmanfm
-		    steam
-		    steam-run
-		    tdesktop
-		    teams
-		    transmission-gtk
-		    unrar
-		    unzip
-        vlc
-		    zip
+	    	abiword
+	    	appimage-run
+		aspell
+		bleachbit
+		curl
+		evolution
+		exaile
+		file
+		ghostscript
+		gimp
+		google-chrome
+		gnumeric
+        	netsurf.browser
+		nicotine-plus
+		steam-run
+		tdesktop
+		teams
+		texmacs
+		transmission-gtk
+		unrar
+		unzip
+        	vlc
+		zip
 
         gnomeExtensions.alphabetical-app-grid
         gnomeExtensions.hide-activities-button
